@@ -272,3 +272,20 @@ function endGame() {
 function restartGame() {
   startGame();
 }
+
+// Function to move car based on steering angle
+function moveCar(direction) {
+  let angle = gameState.steeringAngle;
+  let speed = gameState.speed;
+
+  // Calculate horizontal movement component
+  let horizontalMovement = Math.sin(angle * (Math.PI / 180)) * direction * speed;
+
+  // Update car's position
+  gameState.x += horizontalMovement;
+
+  // Update car's position on screen
+  let racerCar = document.querySelector('.racerCar');
+  racerCar.style.left = gameState.x + 'px';
+}
+
