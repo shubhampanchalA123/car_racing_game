@@ -5,7 +5,7 @@ const racingArea = document.querySelector('.racingArea');
 const clickToPlay = document.querySelector('.clickToPlay');
 
 clickToPlay.addEventListener('click', startGame);
-initialScreen.addEventListener('click', restartGame); // Add this line
+initialScreen.addEventListener('click', restartGame);
 document.addEventListener('keydown', handleKeyDown);
 document.addEventListener('keyup', handleKeyUp);
 
@@ -22,6 +22,7 @@ let gameState = {
   highScore: 0,
   coinCount: 0,
   isActive: false,
+  steeringAngle: 0, // Initially the steering wheel angle is 0 degrees
 };
 
 function handleKeyDown(e) {
@@ -57,6 +58,85 @@ function startGame() {
   gameState.isActive = true;
   gameState.score = 0;
   gameState.coinCount = 0;
+
+  // Create steering wheel image
+  const steeringWheel = document.createElement('img');
+  steeringWheel.src = 'image/stareeing.png'; // Replace with your actual path
+  steeringWheel.classList.add('steeringWheel');
+  steeringWheel.style.position = 'absolute';
+  steeringWheel.style.left = '82%';
+  steeringWheel.style.bottom = '26%';
+  steeringWheel.style.transform = 'translateX(-50%)';
+  steeringWheel.style.width = '80px'; // Adjust size as needed
+  steeringWheel.style.height = '80px'; // Adjust size as needed
+  steeringWheel.style.cursor = 'pointer';
+  racingArea.appendChild(steeringWheel);
+
+  // Add event listeners for steering wheel movement
+  let isSteering = false;
+  let startAngle = 0;
+
+  steeringWheel.addEventListener('mousedown', handleMouseDown);
+  steeringWheel.addEventListener('touchstart', handleTouchStart);
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('touchmove', handleTouchMove);
+  document.addEventListener('mouseup', handleMouseUp);
+  document.addEventListener('touchend', handleTouchEnd);
+
+  function handleMouseDown(e) {
+    isSteering = true;
+    startAngle = getAngle(e);
+  }
+
+  function handleTouchStart(e) {
+    isSteering = true;
+    startAngle = getAngle(e.touches[0]);
+  }
+
+  function handleMouseMove(e) {
+    if (!isSteering) return;
+    let currentAngle = getAngle(e);
+    let rotateAngle = currentAngle - startAngle;
+    gameState.steeringAngle += rotateAngle;
+    updateCarDirection();
+    startAngle = currentAngle;
+  }
+
+  function handleTouchMove(e) {
+    if (!isSteering) return;
+    let currentAngle = getAngle(e.touches[0]);
+    let rotateAngle = currentAngle - startAngle;
+    gameState.steeringAngle += rotateAngle;
+    updateCarDirection();
+    startAngle = currentAngle;
+  }
+
+  function handleMouseUp() {
+    isSteering = false;
+  }
+
+  function handleTouchEnd() {
+    isSteering = false;
+  }
+
+  function getAngle(e) {
+    let rect = steeringWheel.getBoundingClientRect();
+    let centerX = rect.left + rect.width / 2;
+    let centerY = rect.top + rect.height / 2;
+    let mouseX = e.clientX || e.touches[0].clientX;
+    let mouseY = e.clientY || e.touches[0].clientY;
+    let radians = Math.atan2(mouseY - centerY, mouseX - centerX);
+    let angle = radians * (180 / Math.PI);
+    return angle;
+  }
+
+  function updateCarDirection() {
+    // Limit steering angle between -45 and 45 degrees
+    gameState.steeringAngle = Math.min(Math.max(gameState.steeringAngle, -45), 45);
+    // Convert steering angle to a scale from -1 (left) to 1 (right)
+    let direction = gameState.steeringAngle / 45;
+    moveCar(direction);
+  }
 
   window.requestAnimationFrame(runGame);
 
@@ -186,11 +266,9 @@ function endGame() {
   gameState.isActive = false;
   gameState.speed = 5;
   initialScreen.classList.remove('hidden');
-  initialScreen.innerHTML = "Game Over <br> Your score is " + (gameState.score - 1) + "<br>Press here to restart the game.";
+  initialScreen.innerHTML = "Game Over<br>Click here to restart";
 }
 
 function restartGame() {
-  if (!gameState.isActive) {
-    startGame();
-  }
+  startGame();
 }
